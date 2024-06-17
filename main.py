@@ -1,5 +1,5 @@
 import streamlit as st
-
+import time
 from src.data.models.api_models import RequestAPIObject
 from src.director.director import Director
 from src.utils import add_comment, handle_submit
@@ -34,11 +34,20 @@ if 'post_description' in st.session_state:
     placeholder = st.empty()
     progress_bar = st.progress(0)
 
+    for i in range(5):
+        placeholder.text(f"🎭 Creating some piece of art 🎬...{'🎞️' * (i % 5)}")
+        time.sleep(0.5)
+
     Settings.llm = Groq(model=model_name, api_key=api_key)
     director = Director(RequestAPIObject(post=st.session_state.post_description,
                                          comments=st.session_state.comments,
                                          groq_api_key=api_key,
                                          groq_model_name=model_name,
                                          progress_bar=progress_bar))
-    scene_prompts = director.build_animation()
+    scene_prompts, story, story_board = director.build_animation()
+    st.subheader("Story:")
+    st.write(story)
+    st.subheader("Story Board Visual Theme:")
+    st.write(story_board.visual_theme)
+    st.subheader("Scene Prompts:")
     st.write(scene_prompts)

@@ -27,7 +27,7 @@ class Director:
         self.request_data.progress_bar.progress(1)
 
         self.logger.info("Animation building complete")
-        return scene_prompts
+        return scene_prompts, story, story_board
 
     @staticmethod
     def get_completion_program(prompt_template_str, output_cls):
