@@ -1,4 +1,4 @@
-name: edai-env
+name: director-env
 channels:
   - defaults
   - conda-forge
