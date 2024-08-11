@@ -175,9 +175,9 @@ for the scene.
 Enhance the given prompt to satisfy the constraints laid out in the Instructions.
 Instructions:
 --------------
+    - If there's any ambiguity in the prompt objects and characters mentioned, you should clarify with more detailed description.
     - You should stick to the given visual theme and the scene description.
-    - You should intensify the wording and description so that the prompt leads us to a better quality AI generation.
-    - If there's any ambiguity in the prompt and the objects mentioned, you should clarify with more detailed description.
+    - You should change the prompt so that it leads us to a better quality AI generation.
     - The prompt should be detailed enough to generate a high-quality image. 
     - The prompt should be concise enough to be processed fully by a stable diffusion.
     - The prompt shouldn't get longer than 75 ish words. 
