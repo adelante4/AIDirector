@@ -17,3 +17,19 @@ class ScenePromptsOutput(BaseModel):
 
     def __str__(self):
         return "\n".join([f"prompt{i}: {prompt}" for i, prompt in enumerate(self.prompts)])
+
+
+class RewrittenStory(BaseModel):
+    story_title: str = Field(..., title="Generated story title")
+    story_content: str = Field(..., title="Generated story content")
+    artistic_style: str = Field(..., title="Artistic style used for the rewritten story")
+
+
+class StoryBriefOutput(BaseModel):
+    brief: str = Field(..., title="Brief of the story")
+    story_analysis: str = Field(..., title="Sociological and philosophical analysis of the characters in the story")
+    artistic_style: str = Field(..., title="Artistic style of the art piece")
+
+
+class EnhancedPromptOutput(BaseModel):
+    enhanced_prompt: str = Field(..., title="Enhanced prompt for the given scene")

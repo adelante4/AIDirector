@@ -10,15 +10,13 @@ story_template = (
     Your task is to extract an innovative short story with the main ideas as the whole discussion.
     
     **Instructions**
-    1. First extract the very abstract subject or a meaning for the whole conversation. 
-    2. Categorize the users who commented in Sociological groups. 
-    3. Try to reflect on the interaction between such characters in your story.
-    4. The short story should be around 2-3 paragraphs long.
-    5. Get creative with it. Remember what kind of writer you are.
-    6. Use fictional characters instead of each group.
-    7. The subject of your story should not be very similar to the news, the similarity should be in the deeper, abstract levels of the story.
-    8. The same should apply to the comments, you should not mention exactly the same stuff, you should just be inspired by them.
-    9. You don't have to use all of the comments.
+    1. Try to reflect on the interaction between such characters in your story.
+    2. The short story should be around 2-3 paragraphs long.
+    3. Get creative with it. Remember what kind of writer you are.
+    4. Use fictional characters instead of each group.
+    5. The subject of your story should not be very similar to the news, the similarity should be in the deeper, abstract levels of the story.
+    6. The same should apply to the comments, you should not mention exactly the same stuff, you should just be inspired by them.
+    7. You don't have to use all of the comments.
     
     You'll  be given the information in the following format:
     <Post>: the header
@@ -33,12 +31,15 @@ story_template = (
     {comments}
     
     ONLY provide the json, no extra words around it.
+    Don't use characters which can be interpreted as control characters in json format. like \n, \t, \r etc.
+    {format_instructions}
     """
 )
 
 story_board_template = (
     """
-    Imagine you're a very artistic short-animation director, who works in a post-modern, avant-garde, surreal genre. 
+    Imagine you're a very artistic short-animation director, people define your artistic style as:
+    {artistic_style} 
     You'll be provided with a short story, your task is to make a storyboard for this story. 
     
     **Instructions**
@@ -50,6 +51,8 @@ story_board_template = (
     {story}
     
     ONLY provide the json, no extra words around it.
+    Don't use characters which can be interpreted as control characters in json format. like \n, \t, \r etc.
+    {format_instructions}
     """
 )
 
@@ -82,10 +85,119 @@ scene_prompts_template = (
     {scene_description}
     
     ONLY provide the json, no extra words around it.
+    Don't use characters which can be interpreted as control characters in json format. like \n, \t, \r etc.
+    {format_instructions}
     """
 )
 
+story_brief_template = """
+Imagine you are a professor of literature and you are teaching a class on postmodern literature.
+Give a brief of {story}.
+The brief should contain the main plot points of the story narrated in a concise manner.
+provide an sociological and philosophical analysis about the characters in the story.
+also describe the artistic style of this art piece.
+Provide the answer in the given json format.
+Don't use characters which can be interpreted as control characters in json format. like \n, \t, \r etc.
+"""
 
+rewrite_story_template = """
+You will be provided with descriptions of two movies, including their story analyses and the artistic styles of their directors. 
+Additionally, you will receive a simple story idea.
+
+Your task is to rewrite this story idea into an original narrative that draws abstract inspiration from both movies and 
+their directors' styles, while ensuring the final story stands as a unique creation.
+
+**Follow these steps**:
+
+    - Abstract Inspiration: Use the provided story idea only as a conceptual starting point. Your final story should be distinctly original, not a direct adaptation.
+
+    - Movie Influence: Subtly incorporate thematic elements, visual motifs, or narrative techniques from the provided films without directly copying their plots. The influences should be organic and enhance your narrative.
+
+    - Character Development: Create complex, multidimensional characters with authentic motivations and conflicts. These characters should drive the narrative and feel fully realized.
+
+    - Atmosphere and Tone: Establish a distinct atmosphere and tone that reflects a hybrid of the artistic styles of both directors. This should permeate the entire story.
+
+    - Vivid Imagery: Use vivid, sensory language to create a rich, immersive story world. This should evoke the visual and emotional impact of a well-directed film.
+
+    - Narrative Structure: Structure your story with a balance of tension, pacing, and emotional resonance. Ensure the narrative unfolds in a way that keeps readers engaged.
+
+    - Themes and Commentary: Explore thought-provoking themes or social commentary that is relevant to contemporary audiences. This should add depth to your story.
+
+    - Genre Subversion: Subvert traditional genre expectations or blend multiple genres to create something innovative and fresh.
+
+    - Authentic Dialogue: Write dialogue that feels natural and serves to reveal character depth and advance the plot.
+
+    - Satisfying Resolution: Conclude the story with a resolution that is both satisfying and leaves room for interpretation, inviting readers to think beyond the final words.
+
+**Output Requirements**:
+
+Your story must be highly creative, demonstrating the potential to captivate discerning readers or critics.
+While drawing inspiration from the provided films, ensure these influences are subtle and serve your unique narrative vision. Avoid forced connections or overt references.
+Write in a style that is distinctly human, with nuanced observations, idiosyncratic details, and a clear authorial voice. Your prose should flow naturally, avoiding formulaic structures or patterns that might suggest computer-generated text.
+Also provide the artistic style needed for the director that will direct this story.
+
+
+**Input**:
+**New Story Idea**: {story_idea}
+**Movies**: 
+{movies}
+
+
+Provide the rewritten story in the given JSON format.
+Only provide the JSON output, with no extra words or explanations around it.
+{format_instructions}
+"""
+
+output_fixing_template = """
+Fix the given json output to satisfy the constraints laid out in the Instructions.
+Instructions:
+--------------
+{instructions}
+--------------
+json output:
+--------------
+{completion}
+--------------
+
+Above, the Completion did not satisfy the constraints given in the Instructions.
+Error:
+--------------
+{error}
+--------------
+
+Please try again. Please only respond with an answer that satisfies the constraints laid out in the Instructions.
+Don't use characters which can be interpreted as control characters in json format. like \n, \t, \r etc.
+"""
+
+prompt_enhance_template = """
+You'll be provided with a prompt that is intended to generate an AI image of a scene from a story. and a visual theme 
+for the scene.
+Enhance the given prompt to satisfy the constraints laid out in the Instructions.
+Instructions:
+--------------
+    - You should stick to the given visual theme and the scene description.
+    - You should intensify the wording and description so that the prompt leads us to a better quality AI generation.
+    - If there's any ambiguity in the prompt and the objects mentioned, you should clarify with more detailed description.
+    - The prompt should be detailed enough to generate a high-quality image. 
+    - The prompt should be concise enough to be processed fully by a stable difustion model which is normally around 75 tokens.
+    - Use vivid language to create a compelling image.
+--------------
+
+**Input**
+<Visual Theme>:
+{visual_theme}
+
+<original prompt>:
+{original_prompt}
+
+{format_instructions}
+"""
+
+
+prompt_enhance_template = PromptTemplate(prompt_enhance_template)
+output_fixing_template = PromptTemplate(output_fixing_template)
+rewrite_story_template = PromptTemplate(rewrite_story_template)
+story_brief_template = PromptTemplate(story_brief_template)
 story_template = PromptTemplate(story_template)
 story_board_template = PromptTemplate(story_board_template)
 scene_prompts_template = PromptTemplate(scene_prompts_template)
