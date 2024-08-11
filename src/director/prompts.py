@@ -179,7 +179,8 @@ Instructions:
     - You should intensify the wording and description so that the prompt leads us to a better quality AI generation.
     - If there's any ambiguity in the prompt and the objects mentioned, you should clarify with more detailed description.
     - The prompt should be detailed enough to generate a high-quality image. 
-    - The prompt should be concise enough to be processed fully by a stable difustion model which is normally around 75 tokens.
+    - The prompt should be concise enough to be processed fully by a stable diffusion.
+    - The prompt shouldn't get longer than 75 ish words. 
     - Use vivid language to create a compelling image.
 --------------
 
