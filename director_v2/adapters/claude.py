@@ -26,6 +26,21 @@ def _tool(schema: Type):
     return {"name": "answer", "description": "Return the structured answer.", "input_schema": schema.model_json_schema()}
 
 
+def _call_tool(client, ledger, label, stage, schema, **kw):
+    """tool_choice 'tool'/'any' is rejected by some models, so use 'auto' and insist in the prompt; retry once."""
+    messages = kw.pop("messages")
+    for attempt in range(2):
+        msg = client.messages.create(tools=[_tool(schema)], tool_choice={"type": "auto"}, messages=messages, **kw)
+        if ledger:
+            ledger.charge(stage, _cost(msg.usage), label)
+        block = next((b for b in msg.content if b.type == "tool_use"), None)
+        if block is not None:
+            return schema.model_validate(block.input)
+        messages = messages + [{"role": "assistant", "content": [b for b in msg.content]},
+                               {"role": "user", "content": "You must answer by calling the `answer` tool now."}]
+    raise RuntimeError(f"{label}: model never called the answer tool")
+
+
 class ClaudeLLM:
     def __init__(self, model: str | None = None, client=None):
         self.model = model or os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-5-5")
@@ -34,14 +49,9 @@ class ClaudeLLM:
 
     def structured(self, schema: Type, task: str, **ctx):
         payload = json.dumps(ctx, default=lambda o: o.model_dump() if hasattr(o, "model_dump") else str(o), indent=1)
-        msg = self.client.messages.create(
-            model=self.model, max_tokens=4096, system=SYSTEM,
-            tools=[_tool(schema)], tool_choice={"type": "tool", "name": "answer"},
-            messages=[{"role": "user", "content": f"{TASKS[task]}\n\nINPUT:\n{payload}"}])
-        if self.ledger:
-            self.ledger.charge("llm", _cost(msg.usage), task)
-        block = next(b for b in msg.content if b.type == "tool_use")
-        return schema.model_validate(block.input)
+        return _call_tool(self.client, self.ledger, task, "llm", schema, model=self.model, max_tokens=4096,
+                          system=SYSTEM + " Call the `answer` tool exactly once.",
+                          messages=[{"role": "user", "content": f"{TASKS[task]}\n\nINPUT:\n{payload}"}])
 
 
 class ClaudeCritic:
@@ -65,11 +75,6 @@ class ClaudeCritic:
         content += [{"type": "text", "text": "GENERATED FRAMES (first, then last if present):"}]
         content += [self._img(f) for f in frames]
         content += [{"type": "text", "text": f"SHOT: {shot.model_dump_json()}\nSTYLE: {style.model_dump_json()}"}]
-        msg = self.client.messages.create(
-            model=self.model, max_tokens=512, system=CRITIC,
-            tools=[_tool(CriticScore)], tool_choice={"type": "tool", "name": "answer"},
-            messages=[{"role": "user", "content": content}])
-        if self.ledger:
-            self.ledger.charge("critic", _cost(msg.usage), f"shot{shot.idx}")
-        block = next(b for b in msg.content if b.type == "tool_use")
-        return CriticScore.model_validate(block.input)
+        return _call_tool(self.client, self.ledger, f"shot{shot.idx}", "critic", CriticScore, model=self.model,
+                          max_tokens=1024, system=CRITIC + " Call the `answer` tool exactly once.",
+                          messages=[{"role": "user", "content": content}])
