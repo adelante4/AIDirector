@@ -2,6 +2,10 @@ name: Render film (v2)
 on:
   workflow_dispatch:
     inputs:
+      ref:
+        description: "Branch to run"
+        default: v2
+        type: string
       post:
         description: "Social media post (first line). Add comments on following lines."
         required: true
@@ -26,6 +30,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install -r requirements-v2.txt
