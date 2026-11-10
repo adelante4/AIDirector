@@ -1,0 +1,51 @@
+name: Render film (v2)
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch to run"
+        default: v2
+        type: string
+      post:
+        description: "Social media post (first line). Add comments on following lines."
+        required: true
+        type: string
+      mode:
+        description: "draft or final"
+        default: draft
+        type: choice
+        options: [draft, final]
+      providers:
+        description: "stub = free offline test, real = fal.ai + Claude"
+        default: stub
+        type: choice
+        options: [stub, real]
+      max_cost:
+        description: "Hard spend cap in USD"
+        default: "3"
+        type: string
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements-v2.txt
+      - name: Run pipeline
+        env:
+          POST: ${{ inputs.post }}
+          FAL_KEY: ${{ secrets.FAL_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          printf '%s\n' "$POST" > post.txt
+          python -m director_v2 --post post.txt --mode "${{ inputs.mode }}" --providers "${{ inputs.providers }}" --max-cost "${{ inputs.max_cost }}" --run-id "gh-${{ github.run_number }}" --fresh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: film-${{ github.run_number }}
+          path: |
+            output/gh-${{ github.run_number }}/final.mp4
+            output/gh-${{ github.run_number }}/*.json
