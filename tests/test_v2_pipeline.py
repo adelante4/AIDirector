@@ -52,3 +52,49 @@ def test_shots_must_reference_bible_assets():
                               first_frame_desc="f", last_frame_desc="l", motion_desc="m")])
     with pytest.raises(ValueError, match="not in bible"):
         validate_bible_covers_shots(bible, sl)
+
+
+# ---- real adapters, with fakes (no network) ----
+from types import SimpleNamespace
+
+from director_v2.adapters.claude import ClaudeLLM
+from director_v2.adapters.fal import FalImageGen, FalVideoGen
+from director_v2.contracts import Themes
+
+
+class FakeFal:
+    def __init__(self, tmp):
+        self.calls, self.tmp = [], tmp
+
+    def upload_file(self, p):
+        return f"https://x/{Path(p).name}"
+
+    def subscribe(self, model, arguments):
+        self.calls.append((model, arguments))
+        f = self.tmp / "remote.bin"
+        f.write_bytes(b"data")
+        url = f.as_uri()
+        return {"images": [{"url": url}]} if "banana" in model else {"video": {"url": url}}
+
+
+def test_fal_adapters_route_by_refs_and_pass_last_frame(tmp_path):
+    fal = FakeFal(tmp_path)
+    img = FalImageGen(fal=fal)
+    ref = tmp_path / "r.png"; ref.write_bytes(b"x")
+    img.generate("p", [], tmp_path / "a.png", 1, (1, 1))
+    img.generate("p", [ref], tmp_path / "b.png", 1, (1, 1))
+    assert fal.calls[0][0] == "fal-ai/nano-banana" and fal.calls[1][0] == "fal-ai/nano-banana/edit"
+    vid = FalVideoGen(fal=fal)
+    vid.generate("m", ref, ref, 4.0, tmp_path / "c.mp4", 3, 25)
+    m, args = fal.calls[-1]
+    assert m == "alibaba/wan-3.0/image-to-video" and args["duration"] == 4 and "end_image_url" in args
+
+
+def test_claude_llm_parses_forced_tool_call():
+    block = SimpleNamespace(type="tool_use", input={"themes": ["a"], "tensions": ["b"], "mood": "m"})
+    usage = SimpleNamespace(input_tokens=1000, output_tokens=100)
+    client = SimpleNamespace(messages=SimpleNamespace(create=lambda **kw: SimpleNamespace(content=[block], usage=usage)))
+    led = Ledger(1.0)
+    llm = ClaudeLLM(client=client); llm.ledger = led
+    out = llm.structured(Themes, "extract themes and tensions", post="p")
+    assert out.mood == "m" and led.total > 0

@@ -27,6 +27,11 @@ class Story(BaseModel):
     text: str
 
 
+class InfluencePick(BaseModel):
+    titles: List[str]
+    weights: List[float]
+
+
 class StyleCard(BaseModel):
     """Output of the style-blend stage. Conditions every downstream stage."""
     influences: List[str]

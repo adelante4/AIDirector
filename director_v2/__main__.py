@@ -15,6 +15,7 @@ def main():
     p.add_argument("--mode", default="draft", choices=["draft", "final"])
     p.add_argument("--run-id", default="run")
     p.add_argument("--max-cost", type=float)
+    p.add_argument("--providers", default="stub", choices=["stub", "real"])
     p.add_argument("--fresh", action="store_true", help="ignore checkpoints")
     args = p.parse_args()
 
@@ -22,7 +23,12 @@ def main():
     inp = PostInput(post=lines[0], comments=lines[1:])
     kw = {"max_cost_usd": args.max_cost} if args.max_cost else {}
     cfg = Config.for_mode(args.mode, **kw)
-    adapters = Adapters(llm=StubLLM(), image=StubImageGen(), video=StubVideoGen(), critic=StubCritic())
+    if args.providers == "real":
+        from .adapters.claude import ClaudeCritic, ClaudeLLM
+        from .adapters.fal import FalImageGen, FalVideoGen
+        adapters = Adapters(llm=ClaudeLLM(), image=FalImageGen(), video=FalVideoGen(), critic=ClaudeCritic())
+    else:
+        adapters = Adapters(llm=StubLLM(), image=StubImageGen(), video=StubVideoGen(), critic=StubCritic())
     report = run(inp, adapters, cfg, run_id=args.run_id, resume=not args.fresh)
     print(json.dumps(report.model_dump(), indent=2))
 

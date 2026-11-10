@@ -30,6 +30,10 @@ def run(inp: PostInput, adapters: Adapters, cfg: Config, run_id: str = "run",
     out.mkdir(parents=True, exist_ok=True)
     led = Ledger(cfg.max_cost_usd)
     a = adapters
+    if hasattr(a.llm, "ledger"):
+        a.llm.ledger = led
+    if hasattr(a.critic, "ledger"):
+        a.critic.ledger = led
 
     themes = _cached(out / "01_themes.json", Themes, lambda: stages.ingest(a, cfg, led, inp), resume)
     story = _cached(out / "02_story.json", Story, lambda: stages.write_story(a, cfg, led, inp, themes), resume)

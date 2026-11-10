@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import List
 
 from .config import Config
-from .contracts import (Asset, Bible, PostInput, RenderResult, ShotList, ShotRender, Story,
+from .contracts import (Asset, Bible, InfluencePick, PostInput, RenderResult, ShotList, ShotRender, Story,
                         StyleCard, Themes, validate_bible_covers_shots)
 from .ledger import Ledger
 
@@ -19,8 +19,15 @@ def write_story(a, cfg, led, inp: PostInput, themes: Themes) -> Story:
 
 
 def blend_style(a, cfg, led, story: Story) -> StyleCard:
-    # TODO: replace with retrieval over books/films/painters + blend weights.
-    return a.llm.structured(StyleCard, "style blend", story=story.text)
+    """Pick influences from the v1 catalog (90 books with briefs), then blend them into a style card.
+    TODO: extend the catalog with films/painters and use embedding retrieval instead of LLM picking."""
+    from src.director.constants import acclaimed_controversial_stories as catalog
+    from src.director.constants import acclaimed_controversial_stories_briefs as briefs
+    pick = a.llm.structured(InfluencePick, "pick two influences", story=story.text, catalog=sorted(set(catalog)))
+    chosen = [t for t in pick.titles if t in briefs][:2] or sorted(briefs)[:2]
+    notes = {t: briefs[t] for t in chosen}
+    card = a.llm.structured(StyleCard, "style blend", story=story.text, influences=notes, weights=pick.weights)
+    return card
 
 
 def build_bible(a, cfg, led, story: Story, style: StyleCard, out: Path) -> Bible:

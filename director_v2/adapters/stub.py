@@ -7,7 +7,7 @@ from typing import List, Optional, Type
 
 from PIL import Image, ImageDraw
 
-from ..contracts import (Asset, Bible, CriticScore, Shot, ShotList, Story, StyleCard, Themes)
+from ..contracts import (Asset, Bible, CriticScore, InfluencePick, Shot, ShotList, Story, StyleCard, Themes)
 
 
 def _h(s: str) -> int:
@@ -24,6 +24,8 @@ class StubLLM:
         if schema is Story:
             return Story(title=f"The Committee of Echoes ({key[:20]})",
                          text="Mara and the Clerk argue in a corridor that rearranges itself each time they agree.")
+        if schema is InfluencePick:
+            return InfluencePick(titles=ctx["catalog"][:2], weights=[0.6, 0.4])
         if schema is StyleCard:
             return StyleCard(influences=["Kafka", "Lynch"], weights=[0.6, 0.4],
                              palette="sodium yellow, bruised green", camera_language="slow dolly, wide lenses",

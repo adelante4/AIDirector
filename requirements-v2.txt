@@ -1,3 +1,5 @@
 pydantic>=2
 pillow
 pytest
+fal-client
+anthropic
